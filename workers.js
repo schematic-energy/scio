@@ -7,8 +7,8 @@
 const pulumi = require("@pulumi/pulumi");
 const random = require("@pulumi/random");
 const aws = require("@pulumi/aws");
-const iam = require("pulumi-utils/iam");
-const { PulumiContext } = require("pulumi-utils/context");
+const iam = require("@schematic-energy/pulumi-utils/iam");
+const { PulumiContext } = require("@schematic-energy/pulumi-utils/context");
 
 function configFiles (ctx, coordinatorFqdn, configBucket) {
     ctx = ctx.withGroup("config");
@@ -85,7 +85,7 @@ exports.autoScalingGroups = function(ctx, {securityGroup, instanceProfile, confi
 
     let ami = pulumi.output(aws.getAmi({
         executableUsers: ["self"],
-        owners: ["407553720128"],
+        owners: [ctx.cfg.require('prestoAmiOwner')],
         filters: [{
             name: "name",
             values: [ctx.cfg.require("prestoWorkerAmi")]

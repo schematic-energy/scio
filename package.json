@@ -5,6 +5,6 @@
         "@pulumi/aws": "latest",
         "@pulumi/awsx": "latest",
         "@pulumi/random": "latest",
-        "@schematic-energy/pulumi-utils": "0.1.0"
+        "@schematic-energy/pulumi-utils": "0.1.2"
     }
 }

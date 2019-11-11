@@ -7,7 +7,7 @@
 const pulumi = require("@pulumi/pulumi");
 const random = require("@pulumi/random");
 const aws = require("@pulumi/aws");
-const iam = require("pulumi-utils/iam");
+const iam = require("@schematic-energy/pulumi-utils/iam");
 
 function configFiles (ctx, configBucket) {
     ctx = ctx.withGroup("config");
@@ -142,7 +142,7 @@ exports.instance = function(ctx, {securityGroup, instanceProfile, configBucket})
 
     let ami = pulumi.output(aws.getAmi({
         executableUsers: ["self"],
-        owners: ["407553720128"],
+        owners: [ctx.cfg.require('prestoAmiOwner')],
         filters: [{
             name: "name",
             values: [ctx.cfg.require("prestoCoordinatorAmi")]

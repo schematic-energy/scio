@@ -33,13 +33,14 @@ and S3 buckets for data storage.
 config:
   aws:allowedAccountIds: '["1234567890"]'     # Your AWS Account ID
   aws:region: us-east-1                       # The region you want to use
+  scio:organization: "example"                # The organization name, used to name various artifacts
   scio:vpcId: "vpc-1234569abcde"              # The VPC ID you want to use
   scio:publicDomainName: "example.com"        # The domain name suffix associated with this installation.
                                               # Used to ensure unique S3 bucket names
   scio:route53ZoneId: "Z1234567"              # The ID of the hosted zone you'll use for DNS resolution
   scio:coordinatorDnsPrefix: "scio.staging"   # The DNS prefix used to register the coordinator in the hosted zone
   scio:subnets: '["subnet-abc", "subnet-xyz]' # Subnets to deploy into
-  scio:allowedCidrs: '["0.0.0.0/0"]'          # Network access whitelist
+  scio:allowedCidrs: '["0.0.0.0/0"]'          # Network access whitelist (including Scio deployment itself)
   scio:keypair: "my-keypair"                  # Name of the keypair
   scio:prestoAmiOwner: "407553720128"         # Your AWS account ID
   # The coordinator AMI name from Step 1

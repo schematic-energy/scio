@@ -6,13 +6,13 @@
 "use strict";
 const pulumi = require("@pulumi/pulumi");
 const aws = require("@pulumi/aws");
-const script = require("pulumi-utils/script");
-const iam = require("pulumi-utils/iam");
+const script = require("@schematic-energy/pulumi-utils/script");
+const iam = require("@schematic-energy/pulumi-utils/iam");
 
 /**
    Add a catalog to Presto. Arguments:
 
-   - `ctx` - The pulumi-utils context
+   - `ctx` - The @schematic-energy/pulumi-utils context
    - `name` - The name of the connector. Must be unique to the Presto instance.
    - `scio` - The stack output from the Scio Pulumi stack.
    - `cfg` - the contents of the connector config file.

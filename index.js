@@ -9,10 +9,10 @@ const pulumi = require("@pulumi/pulumi");
 const random = require("@pulumi/random");
 const aws = require("@pulumi/aws");
 const awsx = require("@pulumi/awsx");
-const { initialize, PulumiContext } = require("pulumi-utils/context");
-const script = require("pulumi-utils/script");
-const git = require("pulumi-utils/git");
-const iam = require("pulumi-utils/iam");
+const { initialize, PulumiContext } = require("@schematic-energy/pulumi-utils/context");
+const script = require("@schematic-energy/pulumi-utils/script");
+const git = require("@schematic-energy/pulumi-utils/git");
+const iam = require("@schematic-energy/pulumi-utils/iam");
 const coordinator = require("./coordinator.js");
 const workers = require("./workers.js");
 
