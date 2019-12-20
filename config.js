@@ -35,11 +35,11 @@ exports.catalog = function(ctx, name, scio, cfg){
 
     let token = pulumi.all([workerCfg.etag, coordinatorCfg.etag]).apply(v => "#" + v.join(""));
 
-    let asgNames = pulumi.all([scio.coordinatorGroup, scio.workerGroups]).apply(v => {
+    let asgNames = pulumi.all([scio.coordinatorGroup.name, scio.workerGroups]).apply(v => {
         let names = [];
         names.push(v[0])
         Array.prototype.push.apply(names, v[1])
-        return names;
+        return names.join(" ");
     });
 
     let getInstanceIds = ctx.r(script.AwsCommand, 'getInstanceIds', {
@@ -75,7 +75,8 @@ exports.catalog = function(ctx, name, scio, cfg){
 
         script += "\nsleep 15";
 
-        return script;});
+        return script;
+    });
 
     let restartNodes = ctx.r(script.ScriptResource, "restart-nodes", {
         script: restartScript
