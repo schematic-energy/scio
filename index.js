@@ -92,19 +92,25 @@ let instancePolicy = iam.policy(ctx, "scio-instance",
 let instanceProfile = iam.instanceProfile(ctx, "scio", ["ec2"], [instancePolicy.arn]);
 
 
-let coordinatorFqdn = coordinator.instance(ctx, { securityGroup: securityGroup,
-                                                  instanceProfile: instanceProfile,
-                                                  configBucket: buckets.config.bucket });
-let workerAutoScalingGroups = workers.autoScalingGroups(ctx, { securityGroup: securityGroup,
-                                                               instanceProfile: instanceProfile,
-                                                               configBucket: buckets.config.bucket,
-                                                               coordinatorFqdn: coordinatorFqdn });
+let coordinatorResults = coordinator.autoScalingGroup(ctx, {
+    securityGroup: securityGroup,
+    instanceProfile: instanceProfile,
+    configBucket: buckets.config.bucket
+});
+
+let workerAutoScalingGroups = workers.autoScalingGroups(ctx, {
+    securityGroup: securityGroup,
+    instanceProfile: instanceProfile,
+    configBucket: buckets.config.bucket,
+    coordinatorFqdn: coordinatorResults.fqdn
+});
 
 exports.scio = {
     instanceRole: instanceProfile.role,
-    coordinator: { host: coordinatorFqdn,
+    coordinator: { host: coordinatorResults.fqdn,
                    securityGroup: securityGroup.id },
     workerGroups: workerAutoScalingGroups.map(asg => asg.name),
+    coordinatorGroup: coordinatorResults.asg,
     buckets: Object.keys(buckets).reduce( (out, k) => {
         out[k] = buckets[k].bucket;
         return out;
