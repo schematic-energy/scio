@@ -35,7 +35,12 @@ exports.catalog = function(ctx, name, scio, cfg){
 
     let token = pulumi.all([workerCfg.etag, coordinatorCfg.etag]).apply(v => "#" + v.join(""));
 
-    let asgNames = scio.workerGroups.apply(v => v.join(" "));
+    let asgNames = pulumi.all([scio.coordinatorGroup, scio.workerGroups]).apply(v => {
+        let names = [];
+        names.push(v[0])
+        Array.prototype.push.apply(names, v[1])
+        return names;
+    });
 
     let getInstanceIds = ctx.r(script.AwsCommand, 'getInstanceIds', {
         region: ctx.region,
@@ -57,9 +62,8 @@ exports.catalog = function(ctx, name, scio, cfg){
 
     let restartScript = pulumi.all([getInstanceIds.result,
                                     getInstanceIps.result,
-                                    scio.coordinator.host,
-                                    token]).apply(([ids, ips, host, token]) => {
-        let script = `${token}\ncurl http://${host}/cgi-bin/update-config.sh`;
+                                    token]).apply(([ids, ips, token]) => {
+        let script = `${token}\n`;
 
         if(JSON.parse(ids).length == 0) {
             return script;

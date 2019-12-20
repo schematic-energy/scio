@@ -8,6 +8,7 @@ const pulumi = require("@pulumi/pulumi");
 const random = require("@pulumi/random");
 const aws = require("@pulumi/aws");
 const iam = require("@schematic-energy/pulumi-utils/iam");
+const { PulumiContext } = require("@schematic-energy/pulumi-utils/context");
 
 function configFiles (ctx, configBucket) {
     ctx = ctx.withGroup("config");
@@ -134,7 +135,7 @@ function hiveMetastore(ctx, securityGroup) {
 }
 
 
-exports.instance = function(ctx, {securityGroup, instanceProfile, configBucket}) {
+exports.autoScalingGroup = function(ctx, {securityGroup, instanceProfile, configBucket}) {
 
     ctx = ctx.withGroup("coordinator");
 
@@ -151,27 +152,88 @@ exports.instance = function(ctx, {securityGroup, instanceProfile, configBucket})
 
     let cfgs = configFiles(ctx, configBucket);
 
-    let coordinatorInstance = ctx.r(aws.ec2.Instance, "instance", {
-        instanceType: ctx.cfg.require("prestoCoordinatorType"),
-        ami: ami,
-        subnetId: ctx.cfg.requireObject('subnets')[0],
+    let launchCfg = ctx.r(aws.ec2.LaunchConfiguration, "launch-config", {
         iamInstanceProfile: instanceProfile,
+        imageId: ami,
+        instanceType: ctx.cfg.require("prestoCoordinatorType"),
         keyName: ctx.cfg.require('keypair'),
-        vpcSecurityGroupIds: [securityGroup.id],
-        userData: pulumi.interpolate `#!/bin/bash
+        securityGroups: [securityGroup.id],
+        spotPrice: ctx.cfg.require("prestoWorkerBidPrice"),
+        userData:  pulumi.interpolate `#!/bin/bash
 sudo su ec2-user /home/ec2-user/run.sh ${ctx.env} s3://${configBucket}/presto/coordinator
 `
-    }, { dependsOn: [metastoreGroup, cfgs]} );
+    },{ dependsOn: [metastoreGroup, cfgs]} );
 
-    let coordinatorDns = ctx.r(aws.route53.Record, "dns", {
-        zoneId: ctx.cfg.require('route53ZoneId'),
-        type: "A",
-        ttl: 300,
-        name: ctx.cfg.require('coordinatorDnsPrefix'),
-        records: [coordinatorInstance.privateIp]
+    let tagMaps = Object.keys(ctx.props.tags).map(k => {
+        return {
+            key: k,
+            value: ctx.props.tags[k],
+            propagateAtLaunch: true
+        };
+    });
+    let asgCtx = new PulumiContext({tags: tagMaps}, ctx.opts);
+
+    let lb = ctx.r(aws.lb.LoadBalancer, `scio-coordinator-${ctx.env}`, {
+        loadBalancerType: "application",
+        internal: true,
+        subnets: ctx.cfg.requireObject('subnets'),
+        securityGroups: [securityGroup.id],
+        vpcId: ctx.cfg.require('vpcId'),
+        zoneId: ctx.cfg.require('route53ZoneId')
     });
 
-    return coordinatorDns.fqdn;
+    let tg = ctx.r(aws.lb.TargetGroup, `scio-coordinator-${ctx.env}`, {
+        port: 8080,
+        protocol: "HTTP",
+        vpcId: ctx.cfg.require('vpcId'),
+        targetType: "instance",
+        deregistrationDelay: 10,
+        healthCheck: {
+            port: 80,
+            enabled: true,
+            interval: 30,
+            timeout: 10,
+            path: "/cgi-bin/healthcheck.sh",
+            healthy_threshold: 2,
+            unhealthy_threshold: 2,
+            matcher: "200-299"
+        }
+    });
+
+    ctx.r(aws.lb.Listener, `scio-8080-${ctx.env}`, {
+        loadBalancerArn: lb.arn,
+        port: 8080,
+        protocol: "HTTP",
+        defaultActions: [{
+            type: "forward",
+            targetGroupArn: tg.arn
+        }]
+    });
+
+    let asg = asgCtx.r(aws.autoscaling.Group, "coordinator", {
+        name: `scio-coordinator-${ctx.env}`,
+        vpcZoneIdentifiers: ctx.cfg.requireObject('subnets'),
+        targetGroupArns: [tg],
+        launchConfiguration: launchCfg,
+        minSize: 1,
+        maxSize: 1,
+        desiredCapacity: 1,
+        healthCheckGracePeriod: 120,
+        healthCheckType: "ELB"
+    }, {dependsOn: cfgs});
+
+    let coordinatorDns = ctx.r(aws.route53.Record, `scio-coordinator-${ctx.env}`, {
+        zoneId: ctx.cfg.require('route53ZoneId'),
+        type: "CNAME",
+        ttl: 30,
+        name: ctx.cfg.require('coordinatorDnsPrefix'),
+        records: [lb.dnsName]
+    });
+
+    return {
+        fqdn: coordinatorDns.fqdn,
+        asg: asg
+    }
 };
 
 //end
