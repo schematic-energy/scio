@@ -17,18 +17,18 @@ const iam = require("@schematic-energy/pulumi-utils/iam");
  - `scio` - The stack output from the Scio Pulumi stack.
  - `contents` - the contents of the file
  */
-exports.configFile = function(ctx, name, scio, contents) {
+exports.configFile = function(ctx, name, filename, scio, contents) {
     ctx = ctx.withGroup(`config-file-${name}`);
 
     let workerCfg = ctx.r(aws.s3.BucketObject, `worker-cfg`, {
         bucket: scio.buckets.config,
-        key: pulumi.interpolate `presto/worker/${name}`,
+        key: pulumi.interpolate `presto/worker/${filename}`,
         content: contents
     });
 
     let coordinatorCfg = ctx.r(aws.s3.BucketObject, `coordinator-cfg`, {
         bucket: scio.buckets.config,
-        key: pulumi.interpolate `presto/coordinator/${name}`,
+        key: pulumi.interpolate `presto/coordinator/${filename}`,
         content: contents
     });
 
@@ -93,5 +93,5 @@ exports.configFile = function(ctx, name, scio, contents) {
  - `cfg` - the contents of the connector config file.
  */
 exports.catalog = function(ctx, name, scio, cfg) {
-    return exports.confgFile(ctx, pulumi.interpolate `catalog/${name}.properties`, scio, cfg);
-}
+    return exports.confgFile(ctx, name, pulumi.interpolate `catalog/${name}.properties`, scio, cfg);
+};
