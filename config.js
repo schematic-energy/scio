@@ -10,35 +10,34 @@ const script = require("@schematic-energy/pulumi-utils/script");
 const iam = require("@schematic-energy/pulumi-utils/iam");
 
 /**
-   Add a catalog to Presto. Arguments:
+ Add a config file to Presto in its $PRESTO_HOME/etc directory. Arguments:
 
-   - `ctx` - The @schematic-energy/pulumi-utils context
-   - `name` - The name of the connector. Must be unique to the Presto instance.
-   - `scio` - The stack output from the Scio Pulumi stack.
-   - `cfg` - the contents of the connector config file.
+ - `ctx` - The @schematic-energy/pulumi-utils context
+ - `name` - The name of the file, relative to $PRESTO_HOME/etc
+ - `scio` - The stack output from the Scio Pulumi stack.
+ - `contents` - the contents of the file
  */
-exports.catalog = function(ctx, name, scio, cfg){
-
-    ctx = ctx.withGroup(`connector-${name}`);
+exports.configFile = function(ctx, name, scio, contents) {
+    ctx = ctx.withGroup(`config-file-${name}`);
 
     let workerCfg = ctx.r(aws.s3.BucketObject, `worker-cfg`, {
         bucket: scio.buckets.config,
-        key: pulumi.interpolate `presto/worker/catalog/${name}.properties`,
-        content: cfg
+        key: pulumi.interpolate `presto/worker/${name}`,
+        content: contents
     });
 
     let coordinatorCfg = ctx.r(aws.s3.BucketObject, `coordinator-cfg`, {
         bucket: scio.buckets.config,
-        key: pulumi.interpolate `presto/coordinator/catalog/${name}.properties`,
-        content: cfg
+        key: pulumi.interpolate `presto/coordinator/${name}`,
+        content: contents
     });
 
     let token = pulumi.all([workerCfg.etag, coordinatorCfg.etag]).apply(v => "#" + v.join(""));
 
     let asgNames = pulumi.all([scio.coordinatorGroup.name, scio.workerGroups]).apply(v => {
         let names = [];
-        names.push(v[0])
-        Array.prototype.push.apply(names, v[1])
+        names.push(v[0]);
+        Array.prototype.push.apply(names, v[1]);
         return names.join(" ");
     });
 
@@ -84,3 +83,15 @@ exports.catalog = function(ctx, name, scio, cfg){
 
     return restartNodes;
 };
+
+/**
+ Add a catalog to Presto. Arguments:
+
+ - `ctx` - The @schematic-energy/pulumi-utils context
+ - `name` - The name of the connector. Must be unique to the Presto instance.
+ - `scio` - The stack output from the Scio Pulumi stack.
+ - `cfg` - the contents of the connector config file.
+ */
+exports.catalog = function(ctx, name, scio, cfg) {
+    return exports.confgFile(ctx, pulumi.interpolate `catalog/${name}.properties`, scio, cfg);
+}
