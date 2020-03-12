@@ -93,5 +93,5 @@ exports.configFile = function(ctx, name, filename, scio, contents) {
  - `cfg` - the contents of the connector config file.
  */
 exports.catalog = function(ctx, name, scio, cfg) {
-    return exports.confgFile(ctx, name, pulumi.interpolate `catalog/${name}.properties`, scio, cfg);
+    return exports.configFile(ctx, name, pulumi.interpolate `catalog/${name}.properties`, scio, cfg);
 };
