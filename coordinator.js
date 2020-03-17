@@ -202,6 +202,14 @@ sudo su ec2-user /home/ec2-user/run.sh ${ctx.env} s3://${configBucket}/presto/co
         }
     });
 
+    let metastoreTg = ctx.r(aws.lb.TargetGroup, `scio-metastore-${ctx.env}`, {
+        port: 9083,
+        protocol: "TCP",
+        vpcId: ctx.cfg.require('vpcId'),
+        targetType: "instance",
+        deregistrationDelay: 10
+    });
+
     ctx.r(aws.lb.Listener, `scio-8080-${ctx.env}`, {
         loadBalancerArn: lb.arn,
         port: 8080,
@@ -212,10 +220,20 @@ sudo su ec2-user /home/ec2-user/run.sh ${ctx.env} s3://${configBucket}/presto/co
         }]
     });
 
+    ctx.r(aws.lb.Listener, `scio-9083-${ctx.env}`, {
+        loadBalancerArn: lb.arn,
+        port: 9083,
+        protocol: "TCP",
+        defaultActions: [{
+            type: "forward",
+            targetGroupArn: metastoreTg.arn
+        }]
+    });
+
     let asg = asgCtx.r(aws.autoscaling.Group, "coordinator", {
         name: `scio-coordinator-${ctx.env}`,
         vpcZoneIdentifiers: ctx.cfg.requireObject('subnets'),
-        targetGroupArns: [tg],
+        targetGroupArns: [tg, metastoreTg],
         launchConfiguration: launchCfg,
         minSize: 1,
         maxSize: 1,
