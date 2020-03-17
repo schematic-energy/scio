@@ -174,46 +174,66 @@ sudo su ec2-user /home/ec2-user/run.sh ${ctx.env} s3://${configBucket}/presto/co
     let asgCtx = new PulumiContext({tags: tagMaps}, ctx.opts);
 
     let lb = ctx.r(aws.lb.LoadBalancer, `scio-coordinator-${ctx.env}`, {
-        loadBalancerType: "application",
+        loadBalancerType: "network",
         internal: true,
         subnets: ctx.cfg.requireObject('subnets'),
-        securityGroups: [securityGroup.id],
         vpcId: ctx.cfg.require('vpcId'),
         zoneId: ctx.cfg.require('route53ZoneId')
     });
 
     let tg = ctx.r(aws.lb.TargetGroup, `scio-coordinator-${ctx.env}`, {
         port: 8080,
-        protocol: "HTTP",
+        protocol: "TCP",
         vpcId: ctx.cfg.require('vpcId'),
         targetType: "instance",
         deregistrationDelay: 10,
+        stickiness: {
+            enabled: false,
+            type: "lb_cookie"
+        },
         healthCheck: {
+            protocol: "HTTP",
             port: 80,
             enabled: true,
             interval: 30,
-            timeout: 10,
             path: "/cgi-bin/healthcheck.sh",
             healthy_threshold: 2,
-            unhealthy_threshold: 2,
-            matcher: "200-299"
+            unhealthy_threshold: 2
         }
+    });
+
+    let metastoreTg = ctx.r(aws.lb.TargetGroup, `scio-metastore-${ctx.env}`, {
+        port: 9083,
+        protocol: "TCP",
+        vpcId: ctx.cfg.require('vpcId'),
+        targetType: "instance",
+        deregistrationDelay: 10
     });
 
     ctx.r(aws.lb.Listener, `scio-8080-${ctx.env}`, {
         loadBalancerArn: lb.arn,
         port: 8080,
-        protocol: "HTTP",
+        protocol: "TCP",
         defaultActions: [{
             type: "forward",
             targetGroupArn: tg.arn
         }]
     });
 
+    ctx.r(aws.lb.Listener, `scio-9083-${ctx.env}`, {
+        loadBalancerArn: lb.arn,
+        port: 9083,
+        protocol: "TCP",
+        defaultActions: [{
+            type: "forward",
+            targetGroupArn: metastoreTg.arn
+        }]
+    });
+
     let asg = asgCtx.r(aws.autoscaling.Group, "coordinator", {
         name: `scio-coordinator-${ctx.env}`,
         vpcZoneIdentifiers: ctx.cfg.requireObject('subnets'),
-        targetGroupArns: [tg],
+        targetGroupArns: [tg, metastoreTg],
         launchConfiguration: launchCfg,
         minSize: 1,
         maxSize: 1,
