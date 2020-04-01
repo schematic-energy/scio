@@ -137,7 +137,7 @@ sudo su ec2-user /home/ec2-user/run.sh ${ctx.env} s3://${configBucket}/presto/wo
             desiredCapacity: ctx.cfg.require("prestoSpotWorkers"),
             forceDelete: true,
             healthCheckGracePeriod: 120,
-            vpcZoneIdentifiers: ctx.cfg.requireObject('subnets')
+            vpcZoneIdentifiers: [ctx.cfg.requireObject('subnets')[0]]
         }, { dependsOn: [cfgs] }));
     }
 
@@ -150,7 +150,7 @@ sudo su ec2-user /home/ec2-user/run.sh ${ctx.env} s3://${configBucket}/presto/wo
             desiredCapacity: ctx.cfg.require("prestoDedicatedWorkers"),
             forceDelete: true,
             healthCheckGracePeriod: 120,
-            vpcZoneIdentifiers: ctx.cfg.requireObject('subnets')
+            vpcZoneIdentifiers: [ctx.cfg.requireObject('subnets')[0]]
         }, { dependsOn: [cfgs] }));
     }
 

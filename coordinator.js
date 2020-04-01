@@ -158,7 +158,6 @@ exports.autoScalingGroup = function(ctx, {securityGroup, instanceProfile, config
         instanceType: ctx.cfg.require("prestoCoordinatorType"),
         keyName: ctx.cfg.require('keypair'),
         securityGroups: [securityGroup.id],
-        spotPrice: ctx.cfg.require("prestoWorkerBidPrice"),
         userData:  pulumi.interpolate `#!/bin/bash
 sudo su ec2-user /home/ec2-user/run.sh ${ctx.env} s3://${configBucket}/presto/coordinator
 `
@@ -232,7 +231,7 @@ sudo su ec2-user /home/ec2-user/run.sh ${ctx.env} s3://${configBucket}/presto/co
 
     let asg = asgCtx.r(aws.autoscaling.Group, "coordinator", {
         name: `scio-coordinator-${ctx.env}`,
-        vpcZoneIdentifiers: ctx.cfg.requireObject('subnets'),
+        vpcZoneIdentifiers: [ctx.cfg.requireObject('subnets')[0]],
         targetGroupArns: [tg, metastoreTg],
         launchConfiguration: launchCfg,
         minSize: 1,
