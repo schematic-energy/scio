@@ -1,9 +1,9 @@
 {
     "name": "scio",
     "dependencies": {
-        "@pulumi/pulumi": "latest",
         "@pulumi/aws": "latest",
         "@pulumi/awsx": "latest",
+        "@pulumi/pulumi": "^2.0.0",
         "@pulumi/random": "latest",
         "@schematic-energy/pulumi-utils": "0.1.2"
     }
