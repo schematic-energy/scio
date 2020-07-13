@@ -79,7 +79,7 @@ hive.allow-drop-table=true
     return files;
 };
 
-exports.autoScalingGroups = function(ctx, {securityGroup, instanceProfile, configBucket, coordinatorFqdn}) {
+exports.autoScalingGroups = function(ctx, {securityGroup, instanceProfile, configBucket, coordinatorFqdn, placementGroup}) {
 
     ctx = ctx.withGroup("workers");
 
@@ -98,14 +98,15 @@ exports.autoScalingGroups = function(ctx, {securityGroup, instanceProfile, confi
 sudo su ec2-user /home/ec2-user/run.sh ${ctx.env} s3://${configBucket}/presto/worker
 `;
 
-    let spotWorkerLaunchConfig = ctx.r(aws.ec2.LaunchConfiguration, "worker-config", {
-        iamInstanceProfile: instanceProfile,
+    let userDataBase64 = userData.apply(v => Buffer.from(v, 'utf-8').toString('base64'));
+
+    let spotWorkerLaunchTemplate = ctx.r(aws.ec2.LaunchTemplate, "presto-spot-worker", {
         imageId: ami,
-        instanceType: ctx.cfg.require("prestoWorkerType"),
         keyName: ctx.cfg.require('keypair'),
-        securityGroups: [securityGroup.id],
-        spotPrice: ctx.cfg.require("prestoWorkerBidPrice"),
-        userData: userData
+        vpcSecurityGroupIds: [securityGroup.id],
+        userData: userDataBase64,
+        iamInstanceProfile: {arn: instanceProfile.arn},
+        placementGroup: placementGroup.name
     });
 
     let dedicatedWorkerLaunchConfig = ctx.r(aws.ec2.LaunchConfiguration, "dedicated-worker-config", {
@@ -128,23 +129,11 @@ sudo su ec2-user /home/ec2-user/run.sh ${ctx.env} s3://${configBucket}/presto/wo
 
     let groups = [];
 
-    if (ctx.cfg.require("prestoSpotWorkers") > 0) {
-        groups.push(asgCtx.r(aws.autoscaling.Group, "workers", {
-            launchConfiguration: spotWorkerLaunchConfig.name,
-            name: `scio-workers-${ctx.env}`,
-            minSize: 1,
-            maxSize: 10,
-            desiredCapacity: ctx.cfg.require("prestoSpotWorkers"),
-            forceDelete: true,
-            healthCheckGracePeriod: 120,
-            vpcZoneIdentifiers: [ctx.cfg.requireObject('subnets')[0]]
-        }, { dependsOn: [cfgs] }));
-    }
-
     if (ctx.cfg.require("prestoDedicatedWorkers") > 0) {
         groups.push(asgCtx.r(aws.autoscaling.Group, "dedicatedWorkers", {
             name: `scio-dedicatedWorkers-${ctx.env}`,
             launchConfiguration: dedicatedWorkerLaunchConfig.name,
+            placementGroup: placementGroup.name,
             minSize: 1,
             maxSize: 10,
             desiredCapacity: ctx.cfg.require("prestoDedicatedWorkers"),

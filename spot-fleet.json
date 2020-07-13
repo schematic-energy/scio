@@ -1,0 +1,76 @@
+{
+    "IamFleetRole": "arn:aws:iam::407553720128:role/aws-ec2-spot-fleet-tagging-role",
+    "AllocationStrategy": "capacityOptimized",
+    "TargetCapacity": 160,
+    "ValidFrom": "2020-07-10T17:52:47Z",
+    "ValidUntil": "2021-07-10T17:52:47Z",
+    "TerminateInstancesWithExpiration": true,
+    "LaunchSpecifications": [],
+    "Type": "request",
+    "LaunchTemplateConfigs": [
+        {
+            "LaunchTemplateSpecification": {
+                "LaunchTemplateId": "lt-0f4c869fb0bc14f9d",
+                "Version": "2"
+            },
+            "Overrides": [
+                {
+                    "InstanceType": "r6g.4xlarge",
+                    "WeightedCapacity": 16,
+                    "SubnetId": "subnet-0b14404823348604f"
+                },
+                {
+                    "InstanceType": "r5.4xlarge",
+                    "WeightedCapacity": 16,
+                    "SubnetId": "subnet-09f64e62bbc966dc4"
+                },
+                {
+                    "InstanceType": "r3.8xlarge",
+                    "WeightedCapacity": 32,
+                    "SubnetId": "subnet-09f64e62bbc966dc4"
+                },
+                {
+                    "InstanceType": "r4.8xlarge",
+                    "WeightedCapacity": 32,
+                    "SubnetId": "subnet-09f64e62bbc966dc4"
+                },
+                {
+                    "InstanceType": "r5.8xlarge",
+                    "WeightedCapacity": 32,
+                    "SubnetId": "subnet-09f64e62bbc966dc4"
+                },
+                {
+                    "InstanceType": "m6g.8xlarge",
+                    "WeightedCapacity": 32,
+                    "SubnetId": "subnet-09f64e62bbc966dc4"
+                },
+                {
+                    "InstanceType": "r6g.8xlarge",
+                    "WeightedCapacity": 32,
+                    "SubnetId": "subnet-09f64e62bbc966dc4"
+                },
+                {
+                    "InstanceType": "r4.4xlarge",
+                    "WeightedCapacity": 16,
+                    "SubnetId": "subnet-09f64e62bbc966dc4"
+                },
+                {
+                    "InstanceType": "r5a.4xlarge",
+                    "WeightedCapacity": 16,
+                    "SubnetId": "subnet-09f64e62bbc966dc4"
+                },
+                {
+                    "InstanceType": "r5d.4xlarge",
+                    "WeightedCapacity": 16,
+                    "SubnetId": "subnet-09f64e62bbc966dc4"
+                },
+                {
+                    "InstanceType": "r5ad.4xlarge",
+                    "WeightedCapacity": 16,
+                    "SubnetId": "subnet-09f64e62bbc966dc4"
+                }
+            ]
+        }
+    ],
+    "SpotMaxTotalPrice": "1.50"
+}

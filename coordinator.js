@@ -135,7 +135,7 @@ function hiveMetastore(ctx, securityGroup) {
 }
 
 
-exports.autoScalingGroup = function(ctx, {securityGroup, instanceProfile, configBucket}) {
+exports.autoScalingGroup = function(ctx, {securityGroup, instanceProfile, configBucket, placementGroup}) {
 
     ctx = ctx.withGroup("coordinator");
 
@@ -234,6 +234,7 @@ sudo su ec2-user /home/ec2-user/run.sh ${ctx.env} s3://${configBucket}/presto/co
         vpcZoneIdentifiers: [ctx.cfg.requireObject('subnets')[0]],
         targetGroupArns: [tg, metastoreTg],
         launchConfiguration: launchCfg,
+        placementGroup: placementGroup.name,
         minSize: 1,
         maxSize: 1,
         desiredCapacity: 1,
@@ -252,7 +253,7 @@ sudo su ec2-user /home/ec2-user/run.sh ${ctx.env} s3://${configBucket}/presto/co
     return {
         fqdn: coordinatorDns.fqdn,
         asg: asg
-    }
+    };
 };
 
 //end

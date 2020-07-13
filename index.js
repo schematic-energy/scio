@@ -91,18 +91,23 @@ let instancePolicy = iam.policy(ctx, "scio-instance",
 
 let instanceProfile = iam.instanceProfile(ctx, "scio", ["ec2"], [instancePolicy.arn]);
 
+let placementGroup = ctx.r(aws.ec2.PlacementGroup, "presto-cluster", {
+    strategy: "cluster"
+});
 
 let coordinatorResults = coordinator.autoScalingGroup(ctx, {
     securityGroup: securityGroup,
     instanceProfile: instanceProfile,
-    configBucket: buckets.config.bucket
+    configBucket: buckets.config.bucket,
+    placementGroup: placementGroup
 });
 
 let workerAutoScalingGroups = workers.autoScalingGroups(ctx, {
     securityGroup: securityGroup,
     instanceProfile: instanceProfile,
     configBucket: buckets.config.bucket,
-    coordinatorFqdn: coordinatorResults.fqdn
+    coordinatorFqdn: coordinatorResults.fqdn,
+    placementGroup: placementGroup
 });
 
 exports.scio = {
