@@ -58,10 +58,9 @@ join-distribution-type=AUTOMATIC
 optimizer.join-reordering-strategy=AUTOMATIC
 spill-enabled=true
 spiller-spill-path=/data/spill
-late-materialization=true
 experimental.late-materialization.enabled=true
 enable-dynamic-filtering=true
-${ctx.cfg.get('prestoConfig')}
+${ctx.cfg.get('prestoCoordinatorConfig')}
 `
     }));
 
