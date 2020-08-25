@@ -56,10 +56,11 @@ discovery-server.enabled=true
 discovery.uri=http://localhost:8080
 join-distribution-type=AUTOMATIC
 optimizer.join-reordering-strategy=AUTOMATIC
-experimental.spill-enabled=true
-experimental.spill-order-by=true
-experimental.spill-window-operator=true
-experimental.spiller-spill-path=/data/spill
+spill-enabled=true
+spiller-spill-path=/data/spill
+late-materialization=true
+experimental.late-materialization.enabled=true
+enable-dynamic-filtering=true
 ${ctx.cfg.get('prestoConfig')}
 `
     }));
