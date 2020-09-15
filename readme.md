@@ -223,4 +223,8 @@ run in this directory:
     pulumi login
     pulumi stack select tetherenergy/<env>
     pulumi destroy
+
+To completely remove the stack from Pulumi,
+including all history, run in this directory:
+
     pulumi stack rm tetherenergy/<env>
