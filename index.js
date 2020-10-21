@@ -47,7 +47,7 @@ let buckets = {
         forceDestroy: !ctx.cfg.get("protect"),
         protect: ctx.cfg.get("protect")
     }),
-    live: ctx.r(aws.s3.Bucket, "notebooks", {
+    notebooks: ctx.r(aws.s3.Bucket, "notebooks", {
         bucket: `notebooks.${nameSuffix}`,
         forceDestroy: !ctx.cfg.get("protect"),
         protect: ctx.cfg.get("protect")
