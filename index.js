@@ -49,6 +49,9 @@ let buckets = {
     }),
     notebooks: ctx.r(aws.s3.Bucket, "notebooks", {
         bucket: `notebooks.${nameSuffix}`,
+        versioning: {
+            enabled: true,
+        },
         forceDestroy: !ctx.cfg.get("protect"),
         protect: ctx.cfg.get("protect")
     }),
