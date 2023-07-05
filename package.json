@@ -3,7 +3,7 @@
     "dependencies": {
         "@pulumi/aws": "latest",
         "@pulumi/awsx": "latest",
-        "@pulumi/pulumi": "^2.0.0",
+        "@pulumi/pulumi": "^2.25.2",
         "@pulumi/random": "latest",
         "@schematic-energy/pulumi-utils": "0.1.2"
     }
